@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: spring-batch-example
+  datasource:
+    url: jdbc:mysql://localhost:3307/spring_batch?useSSL=false&serverTimezone=Asia/Seoul
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  batch:
+    jdbc:
+      platform: mysql
+    job:
+      name: ${job.name:NONE}
+logging:
+  level:
+    root: info
