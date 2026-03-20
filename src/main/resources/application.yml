@@ -6,12 +6,18 @@ spring:
     username: root
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
-
   batch:
     jdbc:
       platform: mysql
     job:
-      name: ${job.name:NONE}
+      name: ${job.name:None}
+      enabled: true
+  jpa:
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
 logging:
   level:
     root: info
