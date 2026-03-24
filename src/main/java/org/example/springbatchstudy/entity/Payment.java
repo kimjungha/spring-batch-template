@@ -1,10 +1,7 @@
 package org.example.springbatchstudy.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,6 +11,7 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@ToString
 public class Payment {
 
     @Id

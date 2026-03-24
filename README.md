@@ -38,3 +38,5 @@
 
 1. ItemReader : Data 에 맞게 구현체를 선택 (없다면 Custom)
    - 대량의 데이터를 읽는 경우 OutOfMemory 메모리 이슈 발생 가능성이 있다. 
+
+# Fault - Tolerant 
