@@ -27,11 +27,10 @@ public class PaymentSource {
     private String partnerCorpName;
 
     /**
-     *  파트너 회사명
+     *  파트너 사업자 번호
      */
     @Column(nullable = false, length = 100, name = "partner_business_registration_number")
     private String partnerBusinessRegistrationNumber;
-
 
     @Column(nullable = false)
     private BigDecimal originalAmount;

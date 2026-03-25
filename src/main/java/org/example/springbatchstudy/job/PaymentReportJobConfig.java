@@ -3,10 +3,9 @@ package org.example.springbatchstudy.job;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.springbatchstudy.entity.InvalidPaymentAmountException;
-import org.example.springbatchstudy.entity.Payment;
-import org.example.springbatchstudy.entity.PaymentRepository;
-import org.example.springbatchstudy.entity.PaymentSource;
+import org.example.springbatchstudy.entity.*;
+import org.example.springbatchstudy.service.PartnerCorporationService;
+import org.example.springbatchstudy.service.PartnerHttpException;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -14,7 +13,6 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.core.step.skip.LimitCheckingItemSkipPolicy;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
@@ -24,7 +22,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 
@@ -37,6 +34,7 @@ public class PaymentReportJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final PaymentRepository paymentRepository;
+    private final PartnerCorporationService partnerCorporationService;
 
     /**
      * JpaPagingItemReader  ->  limit, offset 기반의 sql 조회 만들기
@@ -52,6 +50,9 @@ public class PaymentReportJobConfig {
                 .build();
     }
 
+    /*
+    *  상호명을  더 이상 paymentSource 에서 관리하지 않겠다
+    */
     @Bean
     public Step paymentReportStep(
             JpaPagingItemReader<PaymentSource> paymentReportReader
@@ -62,10 +63,8 @@ public class PaymentReportJobConfig {
                 .processor(itemProcessor())
                 .writer(paymentReportWriter())
                 .faultTolerant() // 내결함성 활성화
-                .skip(InvalidPaymentAmountException.class)
-                .skipLimit(10) // 최대 10 개까지 건너뛰기
-                .skipPolicy(new LimitCheckingItemSkipPolicy()) // 횟수 기반
-                .noSkip(NullPointerException.class) // NPE 는  건너뛰지 않겠다.
+                .retryLimit(10)
+                .retry(PartnerHttpException.class)
                 .build();
     }
 
@@ -95,16 +94,19 @@ public class PaymentReportJobConfig {
 //            }
 
             // 할인금액이 음수되는 경우
-            if(paymentSource.getDiscountAmount().signum() == -1){
-                final String msg = "할인 금액이 0 이 아닌 결제는 처리할 수 없습니다. 현재 할인 금액 :" + paymentSource.getDiscountAmount();
-                log.error(msg);
-                throw new InvalidPaymentAmountException(msg);
-            }
+//            if(paymentSource.getDiscountAmount().signum() == -1){
+//                final String msg = "할인 금액이 0 이 아닌 결제는 처리할 수 없습니다. 현재 할인 금액 :" + paymentSource.getDiscountAmount();
+//                log.error(msg);
+//                throw new InvalidPaymentAmountException(msg);
+//            }
+
+            final String partnerCorpName = partnerCorporationService.getPartnerCorpName(paymentSource.getPartnerBusinessRegistrationNumber());
 
             return new Payment(
                 null,
                     paymentSource.getFinalAmount(),
                     paymentSource.getPaymentDate(),
+                    partnerCorpName,
                     "PAYMENT"
             );
         };

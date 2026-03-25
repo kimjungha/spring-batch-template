@@ -25,6 +25,12 @@ public class Payment {
     private LocalDate paymentDate;
 
     /**
+     *  파트너 회사명
+     */
+    @Column(nullable = false, length = 100)
+    private String partnerCorpName;
+
+    /**
     * 결제 상태, 취소, 부분 취소
     * */
     @Column(nullable = false)
