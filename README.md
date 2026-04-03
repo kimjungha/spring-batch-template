@@ -31,7 +31,6 @@
 *  `BATCH_JOB_EXECUTION` : `BATCH_JOB_INSTANCE` 와 관계가 있으며, 실행 한 Job 의 시작시간, 종료시간, 상태 등등의 정보를 확인할 수 있다. 
 * `BATCH_STEP_EXECUTION` :  `BATCH_JOB_EXECUTION` 와 관계가 있으며, 실행 한 Step 이 몇 개를 읽었는지, 썼는지 등등 디테일 한 정보를 확인할 수 있다. 
 
-
 # Chuck 
 * 관련 properties 설정
 * Entity : Payment, PaymentSource 생성 
@@ -40,3 +39,11 @@
    - 대량의 데이터를 읽는 경우 OutOfMemory 메모리 이슈 발생 가능성이 있다. 
 
 # Fault - Tolerant 
+
+# Spring Batch 성능 최적화 기법 : 각 요소들을 어떻게 최적화 수행하는 방법
+* Reader (ItemReader) 
+  1. Limit-Offset 방식
+  2. No- Offset 방식
+  3. Cursor 방식: Stream 처럼 하나하나씩 읽는 방식 
+* Processor & Writer : 100번의 I/O 대신에, chuck 단위로 나눠 I/O 를 줄이자 
+  * Limit

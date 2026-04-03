@@ -20,33 +20,32 @@ public class PartnerCorporationService {
     private static final int HTTP_REQUEST_DELAY_MS = 200;
 
     public static final Map<String, String> PARTNER_CORP = Map.ofEntries(
-            Map.entry("000-02-00002", "LG전자"),
-            Map.entry("000-02-00003", "현대자동차"),
-            Map.entry("000-02-00001", "삼성전자"),
-            Map.entry("000-02-00004", "SK텔레콤"),
-            Map.entry("000-02-00005", "네이버"),
-            Map.entry("000-02-00006", "카카오"),
-            Map.entry("000-02-00007", "쿠팡"),
-            Map.entry("000-02-00008", "배달의민족"),
-            Map.entry("000-02-00009", "토스"),
-            Map.entry("000-02-00010", "당근마켓"),
-            Map.entry("000-02-00011", "KT"),
-            Map.entry("000-02-00012", "롯데그룹"),
-            Map.entry("000-02-00013", "포스코"),
-            Map.entry("000-02-00014", "신한금융그룹"),
-            Map.entry("000-02-00015", "KB금융그룹"),
-            Map.entry("000-02-00016", "농협"),
-            Map.entry("000-02-00017", "하나금융그룹"),
-            Map.entry("000-02-00018", "대한항공"),
-            Map.entry("000-02-00019", "아시아나항공"),
-            Map.entry("000-02-00020", "CJ그룹")
-    );
-    // 실제 http x , mock 객체처럼 사업자 번호를 상호명으로 변경
+            Map.entry("000-01-00002", "LG전자"),
+            Map.entry("000-01-00003", "현대자동차"),
+            Map.entry("000-01-00001", "삼성전자"),
+            Map.entry("000-01-00004", "SK텔레콤"),
+            Map.entry("000-01-00005", "네이버"),
+            Map.entry("000-01-00006", "카카오"),
+            Map.entry("000-01-00007", "쿠팡"),
+            Map.entry("000-01-00008", "배달의민족"),
+            Map.entry("000-01-00009", "토스"),
+            Map.entry("000-01-00010", "당근마켓"),
+            Map.entry("000-01-00011", "KT"),
+            Map.entry("000-01-00012", "롯데그룹"),
+            Map.entry("000-01-00013", "포스코"),
+            Map.entry("000-01-00014", "신한금융그룹"),
+            Map.entry("000-01-00015", "KB금융그룹"),
+            Map.entry("000-01-00016", "농협"),
+            Map.entry("000-01-00017", "하나금융그룹"),
+            Map.entry("000-01-00018", "대한항공"),
+            Map.entry("000-01-00019", "아시아나항공"),
+            Map.entry("000-01-00020", "CJ그룹")
+    );// 실제 http x , mock 객체처럼 사업자 번호를 상호명으로 변경
 
 
     public String getPartnerCorpName(String businessNumber) throws InterruptedException {
         final String partnerCorpName = PARTNER_CORP.getOrDefault(businessNumber,"NONE");
-        checkFailureByCallCount();
+//        checkFailureByCallCount();
         log.info("파트너  사업자번호{}의 회사명 조회 성공:{}",businessNumber,partnerCorpName);
         return partnerCorpName;
     }

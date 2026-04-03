@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springbatchstudy.entity.*;
 import org.example.springbatchstudy.service.PartnerCorporationService;
-import org.example.springbatchstudy.service.PartnerHttpException;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -15,6 +14,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +35,10 @@ public class PaymentReportJobConfig {
     private final PlatformTransactionManager transactionManager;
     private final PaymentRepository paymentRepository;
     private final PartnerCorporationService partnerCorporationService;
+
+    private final StepDurationTrackerListener stepDurationTrackerListener;
+    private final ChunkDurationTrackerListener chunkDurationTrackerListener;
+    private final int chuckSize = 1_000;
 
     /**
      * JpaPagingItemReader  ->  limit, offset 기반의 sql 조회 만들기
@@ -58,13 +62,12 @@ public class PaymentReportJobConfig {
             JpaPagingItemReader<PaymentSource> paymentReportReader
     ){
         return new StepBuilder("paymentReportStep",jobRepository)
-                .<PaymentSource, Payment> chunk(10,transactionManager)
+                .<PaymentSource, Payment>chunk(chuckSize,transactionManager)
+                .listener(stepDurationTrackerListener)
                 .reader(paymentReportReader)
                 .processor(itemProcessor())
-                .writer(paymentReportWriter())
-                .faultTolerant() // 내결함성 활성화
-                .retryLimit(10)
-                .retry(PartnerHttpException.class)
+                .writer(paymentJpaItemWriter())
+                .listener(chunkDurationTrackerListener)
                 .build();
     }
 
@@ -77,30 +80,17 @@ public class PaymentReportJobConfig {
         return new JpaPagingItemReaderBuilder<PaymentSource>()
                 .name("paymentReportReader")
                 .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT ps FROM PaymentSource ps WHERE ps.paymentDate = :paymentDate")
+                .queryString("SELECT ps FROM PaymentSource ps WHERE ps.paymentDate = :paymentDate ORDER BY ps.id ASC")
                 .parameterValues(Collections.singletonMap("paymentDate",paymentDate))
-                .pageSize(10)
+                .pageSize(chuckSize)
                 .build();
     }
 
     private ItemProcessor<PaymentSource, Payment> itemProcessor(){
-        /**
-        * 최종 결제 금액이 0 원인경우는 payment 에 저장되지 않는다.
-        */
         return paymentSource -> {
-//            최종 금액 0 원인 경우 제외
-//            if(paymentSource.getFinalAmount().compareTo(BigDecimal.ZERO) ==0){
-//                return null;
-//            }
 
-            // 할인금액이 음수되는 경우
-//            if(paymentSource.getDiscountAmount().signum() == -1){
-//                final String msg = "할인 금액이 0 이 아닌 결제는 처리할 수 없습니다. 현재 할인 금액 :" + paymentSource.getDiscountAmount();
-//                log.error(msg);
-//                throw new InvalidPaymentAmountException(msg);
-//            }
-
-            final String partnerCorpName = partnerCorporationService.getPartnerCorpName(paymentSource.getPartnerBusinessRegistrationNumber());
+            final String partnerCorpName = partnerCorporationService.getPartnerCorpName(
+                    paymentSource.getPartnerBusinessRegistrationNumber());
 
             return new Payment(
                 null,
@@ -112,16 +102,16 @@ public class PaymentReportJobConfig {
         };
     }
 
-//    private ItemWriter<Payment> itemWriter(){
-//        return paymentRepository::saveAll;
-//    }
+    private ItemWriter<Payment> itemWriter(){
+        return paymentRepository::saveAll;
+    }
 
-//    @Bean
-//    public JpaItemWriter<Payment> paymentJpaItemWriter(){
-//        JpaItemWriter<Payment> writer = new JpaItemWriter<>();
-//        writer.setEntityManagerFactory(entityManagerFactory);
-//        return writer;
-//    }
+    @Bean
+    public JpaItemWriter<Payment> paymentJpaItemWriter(){
+        JpaItemWriter<Payment> writer = new JpaItemWriter<>();
+        writer.setEntityManagerFactory(entityManagerFactory);
+        return writer;
+    }
 
     @Bean
     public ItemWriter<Payment> paymentReportWriter(){
