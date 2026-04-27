@@ -47,3 +47,28 @@
   3. Cursor 방식: Stream 처럼 하나하나씩 읽는 방식 
 * Processor & Writer : 100번의 I/O 대신에, chuck 단위로 나눠 I/O 를 줄이자 
   * Limit
+
+# Job Execution 의 생성 흐름 
+``` 
+jobLauncher.run() 호출
+│
+▼
+Spring Batch 내부 (JobRepository)JdbcTemplate 로 
+BATCH_JOB_EXECUTION 테이블에 즉시 INSERT → createTime 설정
+│
+▼
+실제 Job 로직 실행 시작 → startTime 설정 (UPDATE)
+│
+▼
+Job 완료
+→ endTime, status 업데이트 (UPDATE)`
+
+# Spring Batch 메타 테이블은 JDBC Template 사용 
+``` 
+Spring Batch 내부 (JobRepository) : 즉시 DB 반영 
+│
+└── JdbcTemplate (spring-jdbc)
+        │
+        ├── BATCH_JOB_EXECUTION       ← createTime, startTime, status
+        ├── BATCH_JOB_EXECUTION_PARAMS ← Job Parameters
+        └── BATCH_STEP_EXECUTION       ← readCount, writeCount 등

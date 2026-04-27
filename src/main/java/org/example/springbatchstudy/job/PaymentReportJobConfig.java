@@ -38,7 +38,7 @@ public class PaymentReportJobConfig {
 
     private final StepDurationTrackerListener stepDurationTrackerListener;
     private final ChunkDurationTrackerListener chunkDurationTrackerListener;
-    private final int chuckSize = 1_000;
+    private final int chuckSize = 10;
 
     /**
      * JpaPagingItemReader  ->  limit, offset 기반의 sql 조회 만들기
@@ -50,6 +50,7 @@ public class PaymentReportJobConfig {
     ){
         return new JobBuilder("paymentReportJob",jobRepository)
                 .incrementer(new RunIdIncrementer())
+                .listener(new JobDurationTrackerListener())
                 .start(paymentReportStep)
                 .build();
     }
@@ -67,7 +68,10 @@ public class PaymentReportJobConfig {
                 .reader(paymentReportReader)
                 .processor(itemProcessor())
                 .writer(paymentJpaItemWriter())
-                .listener(chunkDurationTrackerListener)
+                .listener(new SampleChuckListener())
+                .listener(new SampleItemReadListener())
+                .listener(new SampleItemProcessorListener())
+                .listener(new SampleItemWriteListener())
                 .build();
     }
 
@@ -83,6 +87,7 @@ public class PaymentReportJobConfig {
                 .queryString("SELECT ps FROM PaymentSource ps WHERE ps.paymentDate = :paymentDate ORDER BY ps.id ASC")
                 .parameterValues(Collections.singletonMap("paymentDate",paymentDate))
                 .pageSize(chuckSize)
+                .maxItemCount(20)
                 .build();
     }
 
